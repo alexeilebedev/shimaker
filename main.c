@@ -4,7 +4,7 @@
 #include <memory.h>
 
 /* shikaku board generator 
-  algo 0: subdivide randomly
+  algo 0: subdivide on x first 
   algo 1: subdivide larger direction
 */
 
@@ -59,14 +59,11 @@ int randcoord(int from, int to) {
 }
 
 void board_generate(struct board *board, int l, int b, int r, int t) {
-  int xsplit=l, ysplit=r;
+  int xsplit=l, ysplit=b;
   /* find split...*/
   if (board->algo==0) {
-    if (randcoord(0,2)==0) {
-      xsplit = randcoord(l,r);
-    } else {
-      ysplit = randcoord(b,t);
-    }
+    xsplit = randcoord(l,r);
+    ysplit = randcoord(b,t);
   } else if (board->algo==1) {
     /* algo1: split bigger coordinate */
     if (r-l > t-b) {
@@ -126,7 +123,7 @@ void board_ps(struct board *board) {
   printf("%%!PS-Adobe-3.0\n");
   printf("<< /PageSize [%f %f] >> setpagedevice\n",rightedge,topedge);
   printf("%f %f scale\n",scale,scale);
-  printf("%f %f translate\n",margin/scale,margin/scale);
+  printf("%f %f translate\n",margin/scale,margin*2/scale);
   printf("0 0 setlinewidth\n");
   printf("/Times-Roman findfont %f scalefont setfont\n",fontsize);
   /* print the board, so that each cell is 1 unit across */
