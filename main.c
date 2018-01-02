@@ -117,7 +117,7 @@ void board_ps(struct board *board) {
 }
 
 int main() {
-  struct board *board = board_create(10,10);
+  struct board *board = board_create(20,30);
   board_generate(board,0,0,board->width,board->height);
   /*board_print(board);*/
   board_ps(board);
