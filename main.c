@@ -116,14 +116,15 @@ void board_ps(struct board *board) {
   float rightedge=595;/*points*/
   float topedge=842;
   float margin=25;
-  float xscale=(rightedge-margin*2)/(board->width+1);
-  float yscale=(topedge-margin*2)/(board->height+2);
+  float xscale=(rightedge-margin*2)/(board->width+1.f);
+  float yscale=(topedge-margin*4)/(board->height+2.f);// why 4??
   float scale=xscale < yscale ? xscale : yscale;
   float fontsize = 0.5f; /* in cell units */
   printf("%%!PS-Adobe-3.0\n");
+  /*printf("%%%% /PageBoundingBox 0 0 %f %f\n",rightedge,topedge);*/
   printf("<< /PageSize [%f %f] >> setpagedevice\n",rightedge,topedge);
+  printf("%f %f translate\n",margin*2,margin*3); // why 3??
   printf("%f %f scale\n",scale,scale);
-  printf("%f %f translate\n",margin/scale,margin*2/scale);
   printf("0 0 setlinewidth\n");
   printf("/Times-Roman findfont %f scalefont setfont\n",fontsize);
   /* print the board, so that each cell is 1 unit across */
@@ -134,7 +135,7 @@ void board_ps(struct board *board) {
   for (int y=0; y<=board->height; y++) {
     ps_lineto(0,y, board->width, y);
   }
-  printf("0 %f moveto (shimaker  width:%d height:%d algo:%d seed:%d chunk:%d) show\n"
+  printf("0 %f moveto (shimaker  width:%d  height:%d  algo:%d  seed:%d  chunk:%d) show\n"
 	 ,board->height+0.3f, board->width, board->height, board->algo, board->seed, board->chunk);
   
   for (int y=0; y<board->height; y++) {
