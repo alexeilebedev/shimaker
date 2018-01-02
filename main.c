@@ -3,19 +3,33 @@
 #include <assert.h>
 #include <memory.h>
 
+/* shikaku board generator 
+  algo 0: subdivide randomly
+  algo 1: subdivide larger direction
+*/
+
 // data structure for the board
 struct board {
   int width;
   int height;
-  char *cells;
+  int algo;
+  int chunk;
+  int seed;
+  int *cells;
 };
 
-struct board *board_create(int width, int height) {
+int imin(int x, int y) {
+  return x<y ? x:y;
+}
+
+struct board *board_create(int width, int height, int algo) {
   struct board *ret = (struct board*)malloc(sizeof(struct board));
   ret->width=width;
   ret->height=height;
-  ret->cells=(char*)malloc(width*height);
-  memset(ret->cells,0,width*height);
+  ret->cells=(int*)calloc(width*height,sizeof(int));
+  ret->algo=algo;
+  ret->chunk =algo==0 ? 2 : imin(ret->width,ret->height)/4;
+  ret->seed=0;
   return ret;
 }
 
@@ -34,10 +48,10 @@ void board_set(struct board *board, int x, int y, int val) {
   board->cells[y * board->width + x] = val;
 }
 
-int validsplit(int min, int max, int split, int height) {
+int validsplit(struct board *board, int min, int max, int split, int height) {
   int area = (split-min)*height;
   int area2= (max-split)*height;
-  return area>2 && area2>2;
+  return area>board->chunk && area2>board->chunk;
 }
 
 int randcoord(int from, int to) {
@@ -47,13 +61,25 @@ int randcoord(int from, int to) {
 void board_generate(struct board *board, int l, int b, int r, int t) {
   int xsplit=l, ysplit=r;
   /* find split...*/
-  xsplit = randcoord(l,r);
-  ysplit = randcoord(b,t);
+  if (board->algo==0) {
+    if (randcoord(0,2)==0) {
+      xsplit = randcoord(l,r);
+    } else {
+      ysplit = randcoord(b,t);
+    }
+  } else if (board->algo==1) {
+    /* algo1: split bigger coordinate */
+    if (r-l > t-b) {
+      xsplit = randcoord(l+1,r);
+    } else {
+      ysplit = randcoord(b+1,t);
+    }
+  }
   /* check if a split occurre */
-  if (validsplit(l,r,xsplit,t-b)) {
+  if (validsplit(board,l,r,xsplit,t-b)) {
     board_generate(board,l,b,xsplit,t);
     board_generate(board,xsplit,b,r,t);
-  } else if (validsplit(b,t,ysplit,r-l)) {
+  } else if (validsplit(board,b,t,ysplit,r-l)) {
     board_generate(board,l,b,r,ysplit);
     board_generate(board,l,ysplit,r,t);
   } else {
@@ -62,6 +88,11 @@ void board_generate(struct board *board, int l, int b, int r, int t) {
     int ycoord = randcoord(b,t);
     board_set(board,xcoord,ycoord,(t-b)*(r-l));
   }
+}
+
+void board_generate_full(struct board *board) {
+  srand(board->seed);
+  board_generate(board,0,0,board->width,board->height);
 }
 
 void board_print(struct board *board) {
@@ -85,10 +116,10 @@ void ps_lineto(float xfrom, float yfrom, float xto, float yto) {
 }
 
 void board_ps(struct board *board) {
-  float rightedge=8;
-  float topedge=11;
+  float rightedge=7.9;
+  float topedge=10.5;
   float xscale=rightedge*72.f/(board->width+1);
-  float yscale=topedge*72.f/(board->height+1);
+  float yscale=topedge*72.f/(board->height+2);
   float scale=xscale < yscale ? xscale : yscale;
   float fontsize = 0.5f; /* in cell units */
   printf("%%!PS-Adobe-3.0\n");
@@ -105,6 +136,9 @@ void board_ps(struct board *board) {
   for (int y=0; y<=board->height; y++) {
     ps_lineto(0,y, board->width, y);
   }
+  printf("0 %f moveto (shimaker  width:%d height:%d algo:%d seed:%d chunk:%d) show\n"
+	 ,board->height+0.3f, board->width, board->height, board->algo, board->seed, board->chunk);
+  
   for (int y=0; y<board->height; y++) {
     for (int x=0; x<board->width; x++) {
       int val=board_get(board,x,y);
@@ -116,9 +150,14 @@ void board_ps(struct board *board) {
   printf("showpage\n");
 }
 
-int main() {
-  struct board *board = board_create(20,30);
-  board_generate(board,0,0,board->width,board->height);
+int main(int argc, char **argv) {
+  int width=argc >1 ? atoi(argv[1]) : 10;
+  int height=argc >2 ? atoi(argv[2]) : 10;
+  int algo=argc > 3 ? atoi(argv[3]) : 0;
+  int seed=argc > 4 ? atoi(argv[4]) : 0;
+  struct board *board = board_create(width,height,algo);
+  board->seed=seed;
+  board_generate_full(board);
   /*board_print(board);*/
   board_ps(board);
   return 0;
