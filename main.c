@@ -116,16 +116,17 @@ void ps_lineto(float xfrom, float yfrom, float xto, float yto) {
 }
 
 void board_ps(struct board *board) {
-  float rightedge=7.9;
-  float topedge=10.5;
-  float xscale=rightedge*72.f/(board->width+1);
-  float yscale=topedge*72.f/(board->height+2);
+  float rightedge=595;/*points*/
+  float topedge=842;
+  float margin=25;
+  float xscale=(rightedge-margin*2)/(board->width+1);
+  float yscale=(topedge-margin*2)/(board->height+2);
   float scale=xscale < yscale ? xscale : yscale;
   float fontsize = 0.5f; /* in cell units */
   printf("%%!PS-Adobe-3.0\n");
-  printf("<< /PageSize [%f %f] >> setpagedevice\n",rightedge*72.f,topedge*72.f);
+  printf("<< /PageSize [%f %f] >> setpagedevice\n",rightedge,topedge);
   printf("%f %f scale\n",scale,scale);
-  printf("0.5 0.5 translate\n");
+  printf("%f %f translate\n",margin/scale,margin/scale);
   printf("0 0 setlinewidth\n");
   printf("/Times-Roman findfont %f scalefont setfont\n",fontsize);
   /* print the board, so that each cell is 1 unit across */
