@@ -5,7 +5,8 @@
 
 /* shikaku board generator 
   algo 0: subdivide on x first 
-  algo 1: subdivide larger direction
+  algo 1: subdivide larger direction first
+  chunk: minimum acceptable area for child
 */
 
 // data structure for the board
@@ -123,7 +124,7 @@ void board_ps(struct board *board) {
   printf("%%!PS-Adobe-3.0\n");
   /*printf("%%%% /PageBoundingBox 0 0 %f %f\n",rightedge,topedge);*/
   printf("<< /PageSize [%f %f] >> setpagedevice\n",rightedge,topedge);
-  printf("%f %f translate\n",margin*2,margin*3); // why 3??
+  printf("%f %f translate\n",margin,margin*3); // why 3??
   printf("%f %f scale\n",scale,scale);
   printf("0 0 setlinewidth\n");
   printf("/Times-Roman findfont %f scalefont setfont\n",fontsize);
@@ -135,8 +136,6 @@ void board_ps(struct board *board) {
   for (int y=0; y<=board->height; y++) {
     ps_lineto(0,y, board->width, y);
   }
-  printf("0 %f moveto (shimaker  width:%d  height:%d  algo:%d  seed:%d  chunk:%d) show\n"
-	 ,board->height+0.3f, board->width, board->height, board->algo, board->seed, board->chunk);
   
   for (int y=0; y<board->height; y++) {
     for (int x=0; x<board->width; x++) {
@@ -146,6 +145,10 @@ void board_ps(struct board *board) {
       }
     }
   }
+  // show definition in 12 point font
+  printf("/Times-Roman findfont %f scalefont setfont\n",12.f/scale);
+  printf("0 %f moveto (shimaker  width:%d  height:%d  algo:%d  seed:%d  chunk:%d) show\n"
+	 ,board->height+0.3f, board->width, board->height, board->algo, board->seed, board->chunk);
   printf("showpage\n");
 }
 
